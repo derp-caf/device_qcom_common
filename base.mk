@@ -1,3 +1,13 @@
+# define flag to determine the kernel
+TARGET_KERNEL_VERSION := $(shell ls kernel | grep "msm-*" | sed 's/msm-//')
+
+# Set TARGET_USES_NEW_ION for 4.14 and higher kernels
+ifeq ($(TARGET_KERNEL_VERSION),$(filter $(TARGET_KERNEL_VERSION),3.18 4.4 4.9))
+TARGET_USES_NEW_ION := false
+else
+TARGET_USES_NEW_ION := true
+endif
+
 # Board platforms lists to be used for
 # TARGET_BOARD_PLATFORM specific featurization
 QCOM_BOARD_PLATFORMS += msm8974
@@ -27,6 +37,8 @@ QCOM_BOARD_PLATFORMS += sdm710
 QCOM_BOARD_PLATFORMS += msmnile_au
 QCOM_BOARD_PLATFORMS += qcs605
 QCOM_BOARD_PLATFORMS += $(MSMSTEPPE)
+QCOM_BOARD_PLATFORMS += $(TRINKET)
+QCOM_BOARD_PLATFORMS += sdmshrike_au
 
 QSD8K_BOARD_PLATFORMS := qsd8k
 
@@ -38,10 +50,13 @@ BOARD_HAVE_QCOM_FM := true
 BOARD_CHARGER_ENABLE_SUSPEND := true
 
 #List of targets that use video hw
-MSM_VIDC_TARGET_LIST := msm8974 msm8610 msm8226 apq8084 msm8916 msm8994 msm8909 msm8992 msm8996 msm8952 msm8937 msm8953 msm8998 apq8098_latv sdm660 sdm845 sdm710 qcs605 msmnile $(MSMSTEPPE)
+MSM_VIDC_TARGET_LIST := msm8974 msm8610 msm8226 apq8084 msm8916 msm8994 msm8909 msm8992 msm8996 msm8952 msm8937 msm8953 msm8998 apq8098_latv sdm660 sdm845 sdm710 qcs605 msmnile $(MSMSTEPPE) $(TRINKET)
 
 #List of targets that use master side content protection
-MASTER_SIDE_CP_TARGET_LIST := msm8996 msm8998 sdm660 sdm845 apq8098_latv sdm710 qcs605 msmnile $(MSMSTEPPE)
+MASTER_SIDE_CP_TARGET_LIST := msm8996 msm8998 sdm660 sdm845 apq8098_latv sdm710 qcs605 msmnile $(MSMSTEPPE) $(TRINKET)
+
+#List of targets where Vulkan feature level is restricted to 0
+VULKAN_FEATURE_LEVEL_0_TARGETS_LIST := msm8937_32 msm8937_64 sdm660_32 sdm660_64 msm8998 msm8998_32 msm8996 msm8953_64 msm8953_32
 
 # Below projects/packages with LOCAL_MODULEs will be used by
 # PRODUCT_PACKAGES to build LOCAL_MODULEs that are tagged with
@@ -120,6 +135,7 @@ AUDIO_HARDWARE += audio.primary.sdm710
 AUDIO_HARDWARE += audio.primary.qcs605
 AUDIO_HARDWARE += audio.primary.msmnile
 AUDIO_HARDWARE += audio.primary.$(MSMSTEPPE)
+AUDIO_HARDWARE += audio.primary.$(TRINKET)
 #
 AUDIO_POLICY := audio_policy.mpq8064
 AUDIO_POLICY += audio_policy.apq8084
@@ -298,6 +314,7 @@ INIT += init.qcom.sdio.sh
 INIT += init.qcom.sh
 INIT += init.qcom.class_core.sh
 INIT += init.class_main.sh
+INIT += init.class_late.sh
 INIT += init.qcom.wifi.sh
 INIT += vold.fstab
 INIT += init.qcom.ril.path.sh
@@ -317,6 +334,7 @@ INIT += init.qcom.crashdata.sh
 INIT += init.qcom.vendor.rc
 INIT += init.target.vendor.rc
 INIT += init.qti.fm.sh
+INIT += init.qti.can.sh
 
 #IPROUTE2
 IPROUTE2 := ip
@@ -478,6 +496,7 @@ LIBGRALLOC += gralloc.sdm660
 LIBGRALLOC += gralloc.sdm710
 LIBGRALLOC += gralloc.qcs605
 LIBGRALLOC += gralloc.$(MSMSTEPPE)
+LIBGRALLOC += gralloc.$(TRINKET)
 
 #memtrack
 LIBMEMTRACK := memtrack.default
@@ -501,6 +520,7 @@ LIBMEMTRACK += memtrack.apq8098_latv
 LIBMEMTRACK += memtrack.sdm710
 LIBMEMTRACK += memtrack.qcs605
 LIBMEMTRACK += memtrack.$(MSMSTEPPE)
+LIBMEMTRACK += memtrack.$(TRINKET)
 
 #LIBLIGHTS
 LIBLIGHTS := lights.msm8660
@@ -531,6 +551,7 @@ LIBLIGHTS += lights.apq8098_latv
 LIBLIGHTS += lights.sdm710
 LIBLIGHTS += lights.qcs605
 LIBLIGHTS += lights.$(MSMSTEPPE)
+LIBLIGHTS += lights.$(TRINKET)
 
 #LIBHWCOMPOSER
 LIBHWCOMPOSER := hwcomposer.msm8660
@@ -562,6 +583,7 @@ LIBHWCOMPOSER += hwcomposer.apq8098_latv
 LIBHWCOMPOSER += hwcomposer.sdm710
 LIBHWCOMPOSER += hwcomposer.qcs605
 LIBHWCOMPOSER += hwcomposer.$(MSMSTEPPE)
+LIBHWCOMPOSER += hwcomposer.$(TRINKET)
 
 #LIBAUDIOPARAM -- Exposing AudioParameter as dynamic library for SRS TruMedia to work
 LIBAUDIOPARAM := libaudioparameter
@@ -653,6 +675,7 @@ NQ_NFC += libnqnfc_nci_jni
 NQ_NFC += libsn100nfc_nci_jni
 NQ_NFC += libsn100nfc-nci
 NQ_NFC += nfc_nci.nqx.default
+NQ_NFC += nfc_nci.sn100.default
 NQ_NFC += libp61-jcop-kit
 NQ_NFC += com.nxp.nfc.nq
 NQ_NFC += com.nxp.nfc.nq.xml
@@ -671,6 +694,7 @@ NQ_NFC += nqnfcinfo
 NQ_NFC += com.android.nfc_extras
 NQ_NFC += vendor.nxp.hardware.nfc@1.1-service
 NQ_NFC += nfc_nci.nqx.default.hw
+NQ_NFC += nfc_nci.sn100.default.hw
 PRODUCT_PROPERTY_OVERRIDES += ro.hardware.nfc_nci=nqx.default
 
 #OPENCORE
@@ -731,6 +755,7 @@ THERMAL_HAL += thermal.msm8996
 THERMAL_HAL += thermal.msm8953
 THERMAL_HAL += thermal.msm8937
 THERMAL_HAL += thermal.msmnile
+THERMAL_HAL += thermal.$(MSMSTEPPE)
 
 #TSLIB_EXTERNAL
 TSLIB_EXTERNAL := corgi
@@ -821,6 +846,8 @@ WIGIG += libwigig_pciaccess
 #FD_LEAK
 FD_LEAK := libc_leak_detector
 
+TELEPHONY_DBG := NrNetworkSettingApp
+
 PRODUCT_PACKAGES := \
     AccountAndSyncSettings \
     DeskClock \
@@ -856,9 +883,7 @@ PRODUCT_PACKAGES := \
     a4wpservice \
     wipowerservice \
     Mms \
-    QtiDialer \
-    NrNetworkSettingApp \
-    qtiNetworkLib
+    QtiDialer
 
 ifeq ($(TARGET_HAS_LOW_RAM),true)
     DELAUN := Launcher3Go
@@ -978,14 +1003,19 @@ PRODUCT_PACKAGES += android.hidl.manager@1.0-java
 
 PRODUCT_PACKAGES += android.hardware.drm@1.0-impl
 PRODUCT_PACKAGES += android.hardware.drm@1.0-service
-PRODUCT_PACKAGES += android.hardware.drm@1.1-service.widevine
 PRODUCT_PACKAGES += android.hardware.drm@1.1-service.clearkey
+
+ifneq ($(strip $(ENABLE_HYP)),false)
+PRODUCT_PACKAGES += android.hardware.drm@1.1-service.widevine
+endif
+
 ifeq ($(strip $(OTA_FLAG_FOR_DRM)),true)
 PRODUCT_PACKAGES += move_widevine_data.sh
 endif
 PRODUCT_PACKAGES += move_wifi_data.sh
 PRODUCT_PACKAGES += librs_jni
 
+PRODUCT_PACKAGES += init.qti.manifest_sku.sh
 # Filesystem management tools
 PRODUCT_PACKAGES += \
     make_ext4fs \
@@ -1012,6 +1042,8 @@ PRODUCT_PACKAGES_DEBUG := init.qcom.testscripts.sh
 #Add init.qcom.test.rc to PRODUCT_PACKAGES_DEBUG list
 PRODUCT_PACKAGES_DEBUG += init.qcom.test.rc
 PRODUCT_PACKAGES_DEBUG += init.qcom.debug.sh
+
+PRODUCT_PACKAGES_DEBUG += $(TELEPHONY_DBG)
 
 #NANOPB_LIBRARY_NAME := libnanopb-c-2.8.0
 
@@ -1086,12 +1118,26 @@ endif
 
 ifneq ($(TARGET_NOT_SUPPORT_VULKAN),true)
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level-1.xml \
     frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.compute-0.xml
 endif
 
+# include additional build utilities
+-include device/qcom/common/utils.mk
+
+# Copy the vulkan feature level file.
+# Targets listed in VULKAN_FEATURE_LEVEL_0_TARGETS_LIST supports only vulkan feature level 0.
 ifneq ($(TARGET_NOT_SUPPORT_VULKAN),true)
-ifneq ($(TARGET_SUPPORT_VULKAN_VERSION_1_1),true)
+ifeq ($(call is-product-in-list,$(VULKAN_FEATURE_LEVEL_0_TARGETS_LIST)), true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level-0.xml
+else
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level-1.xml
+endif
+endif
+
+ifneq ($(TARGET_NOT_SUPPORT_VULKAN),true)
+ifeq ($(TARGET_SUPPORT_VULKAN_VERSION_1_1),false)
 PRODUCT_COPY_FILES += frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version-1_0_3.xml
 else
 PRODUCT_COPY_FILES += frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version-1_1.xml
@@ -1119,8 +1165,6 @@ else
      KERNEL_TO_BUILD_ROOT_OFFSET := ../../
      TARGET_KERNEL_SOURCE := kernel/msm-$(TARGET_KERNEL_VERSION)
 endif
-# include additional build utilities
--include device/qcom/common/utils.mk
 
 #Enabling Ring Tones
 #include frameworks/base/data/sounds/OriginalAudio.mk
